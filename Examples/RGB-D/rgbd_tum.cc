@@ -35,9 +35,9 @@ void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageF
 
 int main(int argc, char **argv)
 {
-    if(argc != 5)
+    if(argc != 6)
     {
-        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association" << endl;
+        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association UseViewer" << endl;
         return 1;
     }
 
@@ -62,7 +62,9 @@ int main(int argc, char **argv)
     }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,true);
+    bool b;
+    istringstream(string(argv[5])) >> b;
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::RGBD,b);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -87,7 +89,9 @@ int main(int argc, char **argv)
                  << string(argv[3]) << "/" << vstrImageFilenamesRGB[ni] << endl;
             return 1;
         }
-
+	//cout << ni << endl;
+	//cout << vstrImageFilenamesRGB[ni] << endl;
+	//cout << vstrImageFilenamesD[ni] << endl;
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 #else
@@ -96,13 +100,14 @@ int main(int argc, char **argv)
 
         // Pass the image to the SLAM system
         SLAM.TrackRGBD(imRGB,imD,tframe);
+	//cout << ni << endl;
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 #else
         std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
 #endif
-
+	//cout << ni << endl;
         double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
 
         vTimesTrack[ni]=ttrack;
@@ -133,8 +138,8 @@ int main(int argc, char **argv)
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
     // Save camera trajectory
-    SLAM.SaveTrajectoryTUM("CameraTrajectory.txt");
-    SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");   
+    SLAM.SaveTrajectoryTUM(string(argv[3]) + "/CameraTrajectory.txt");
+    SLAM.SaveKeyFrameTrajectoryTUM(string(argv[3]) + "/KeyFrameTrajectory.txt");   
 
     return 0;
 }
